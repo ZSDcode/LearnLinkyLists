@@ -147,4 +147,17 @@ int main() {
 
     vector<int>check1 = BinarySearch({1, 2, 10, 102, 300}, 102);
     cout << check1[0];
+
+    string modulesString = "CS1231SDiscrete StructuresCS2030SProgramming Methodology IICS2040SData Structures and AlgorithmsCS2100Computer OrganisationCS2101Effective Communication for Computing ProfessionalsCS2103TSoftware EngineeringCS2106Introduction to Operating SystemsCS2109SIntroduction to AI and Machine LearningCS3230Design and Analysis of Algorithms";
+    for (int i = 0; i<modulesString.length(); i++) {
+        if (isdigit(modulesString[i]) == true) {
+            for (int j = i; j<modulesString.length(); j++) {
+                if (isalpha(modulesString[j])) {
+                    if (modulesString[j] == 'S' || modulesString[j] == 'T') {
+                        
+                    }
+                }
+            }
+        }
+    }
 }
