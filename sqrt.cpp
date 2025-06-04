@@ -290,7 +290,39 @@ bool fermat_prime_test(int n, int repeat) {
     }
 }
 
+int summation (function<int(int)> term, int x, function<int(int)> next, int y) {
+    if (x > y) {
+        return 0;
+    }
+    else {
+        return term(x) + summation(term, next(x), next, y);
+    }
+}
 
+int cube(int x) {
+    return x * x * x;
+}
+
+int inc(int x) {
+    return x + 1;
+}
+
+float def_integral(function<float(float)> func, float x, float dx, float y, function<float(float, float)> change, float tot) {
+    if (x > y) {
+        return tot;
+    }
+    else {
+        return def_integral(func, change(x, dx), dx, y, change, tot + func(x+dx/2) * dx);
+    }
+}
+
+float change(float x, float dx) {
+    return x + dx;
+}
+
+float random_math_func(float x) {
+    return x * x + 2 * x;
+}
 
 int main() {
     cout << sqrt_myfunc(1000) << endl;
@@ -314,4 +346,6 @@ int main() {
     cout << is_prime(10) << endl;
     cout << is_prime(5) << endl;
     cout << fermat_lil(2, 11) << endl;
+    cout << summation(cube, 1, inc, 3) << endl;
+    cout << def_integral(random_math_func, 1, 0.01, 2, change, 0) << endl;
 }
