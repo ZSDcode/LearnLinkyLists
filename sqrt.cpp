@@ -1,3 +1,5 @@
+#include <functional>
+#include <random>
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -107,9 +109,192 @@ vector<int> Pascal(int n) {
     }
 }
 
+int exp_recurse(int b, int n) {
+    if (n == 1) {
+        return b;
+    }
+    else {
+        return b * exp_recurse(b, n-1);
+    }
+}
+
+int exp_iter(int b, int count, int product) {
+    if (count == 0) {
+        return product;
+    }
+    else {
+        return exp_iter(b, count-1, product * b);
+    }
+}
+
+int exp(int b, int n) {
+    return exp_iter(b, n, 1);
+}
+
+int fast_exp_recurse(int b, int n) {
+    if (n == 1) {
+        return b;
+    }
+    else if (n%2 == 0) {
+        return fast_exp_recurse(b, n/2) * fast_exp_recurse(b, n/2);
+    }
+    else {
+        return b * fast_exp_recurse(b, n-1);
+    }
+}
+
+int fast_exp_iter(int b, int count, int product) {
+    if (count == 0) {
+        return product;
+    }
+    else if (count % 2 == 0) {
+        return fast_exp_iter(b*b, count/2, product);
+    }
+    else {
+        return fast_exp_iter(b, count - 1, product * b);
+    }
+}
+
+int fast_exp(int b, int n) {
+    return fast_exp_iter(b, n, 1);    
+}
+
+int double_myfunc(int a) {
+    return a*2;
+}
+
+int halve(int a) {
+    return a/2;
+}
+
+int multiply_recurse(int a, int b) {
+    if (b == 0) {
+        return 0;
+    }
+    else {
+        if (b == 1) {
+            return a;
+        }
+        else {
+            return a + multiply_recurse(a, b-1);
+        }
+    }
+}
+
+int fast_multiply_recurse(int a, int b) {
+    if (b == 0) {
+        return 0;
+    }
+    else {
+        if (b == 1) {
+            return a;
+        }
+        else {
+            if (b % 2 == 0) {
+                return fast_multiply_recurse(double_myfunc(a), halve(b));
+            }
+            else {
+                return a + fast_multiply_recurse(a, b-1);
+            }
+        }
+    }
+}
+
+int fast_multiply_iter(int a, int count, int total) {
+    if (count == 0) {
+        return total;
+    }
+    else {
+        if (count % 2 == 0) {
+            return fast_multiply_iter(double_myfunc(a), halve(count), total);
+        }
+        else {
+            return fast_multiply_iter(a, count-1, total + a);
+        }
+    }
+}
+
+int fast_multiply(int a, int b) {
+    return fast_multiply_iter(a, b, 0);
+}
+
+int euclid_gcd(int a, int b) {
+    if (b == 0) {
+        return a;
+    }
+    else {
+        return (euclid_gcd(b, a%b));
+    }
+}
+
+bool check_divide(int a, int b) {
+    if (a % b == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+int check_divisibility(int n, int count, int no_of_divisors) {
+    if (count * count > n) {
+        return no_of_divisors;
+    }
+    else {
+        if (check_divide(n, count)) {
+            no_of_divisors += 1;
+            return check_divisibility(n, count + 1, no_of_divisors);
+        }
+        else {
+            return check_divisibility(n, count+1, no_of_divisors);
+        }
+    }
+}
+
+bool is_prime(int n) {
+    if (check_divisibility(n, 2, 0) == 0) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool fermat_lil(int a, int n) {
+    int modpow = fast_exp(a, n) % n;
+    int mod = a % n;
+    if (modpow == mod) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+random_device rd;
+mt19937 gen(rd());
+
+bool fermat_prime_test(int n, int repeat) {
+    if (repeat <= 0) {
+        return true;
+    }
+    else {
+        uniform_int_distribution<int> distribution(1, n-1);
+        int a = distribution(gen);
+        if ( ! fermat_lil(a, n) ) {
+            return false;
+        }
+        else {
+            return fermat_prime_test(n, repeat - 1);
+        }
+    }
+}
+
+
+
 int main() {
     cout << sqrt_myfunc(1000) << endl;
-    cout << A(1, 10) << endl ;
+    cout << A(1, 10) << endl;
     cout << fib(10) << endl;
     cout << f1_recurse(4) << endl;
     cout << f1_iterFull(4) << endl;
@@ -118,4 +303,15 @@ int main() {
         cout << row6[i] << ", ";
     }
     cout << endl;
+    cout << exp_recurse(8, 3) << endl;
+    cout << exp(8, 3) << endl;
+    cout << fast_exp_recurse(2, 6) << endl;
+    cout << fast_exp(2, 10) << endl;
+    cout << multiply_recurse(2, 3) << endl;
+    cout << fast_multiply_recurse(10, 20) << endl;
+    cout << fast_multiply(2, 3) << endl;
+    cout << euclid_gcd(100, 75) << endl;
+    cout << is_prime(10) << endl;
+    cout << is_prime(5) << endl;
+    cout << fermat_lil(2, 11) << endl;
 }
