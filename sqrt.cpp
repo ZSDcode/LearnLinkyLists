@@ -251,7 +251,10 @@ int check_divisibility(int n, int count, int no_of_divisors) {
     }
 }
 
-bool is_prime(int n) {
+bool is_prime(float n) {
+    if (n <= 1) {
+        return false;
+    }
     if (check_divisibility(n, 2, 0) == 0) {
         return true;
     }
@@ -321,7 +324,155 @@ float change(float x, float dx) {
 }
 
 float random_math_func(float x) {
-    return x * x + 2 * x;
+    return x * x * x + 2 * x;
+}
+
+float simpsons_est(function<float(float)> func, float initial, float final, float dx, float est) {
+    if (initial + 2 * dx - 0.0000001 > final) {
+        return est;
+    }
+    else {
+        float term_sum_main = func(initial) + 4 * func(change(initial, dx)) + func(change(initial, 2 * dx));
+        float term_sum_acc = term_sum_main * dx / 3;
+        return simpsons_est(func, change(initial, 2 * dx), final, dx, est + term_sum_acc);
+    }
+}
+
+float product_iter(function<float(float)> term, float initial, function<float(float)> next, float final, float result) {
+    if (initial > final) {
+        return result;
+    }
+    else {
+        return product_iter(term, next(initial), next, final, result * term(initial));
+    }
+}
+
+float product_recurse(function<float(float)> term, float initial, function<float(float)> next, float final) {
+    if (initial >= final) {
+        return term(initial);
+    }
+    else {
+        return term(initial) * product_recurse(term, next(initial), next, final);
+    }
+}
+
+float equiv(int n) {
+    return (float)n;
+}
+
+float fact_abstraction(int n) {
+    return product_iter(equiv, 1, inc, n, 1);
+}
+
+int inc_double(int x) {
+    return x + 2;
+}
+
+float multiply_consec_eo_no(float n) {
+    return product_iter(equiv, n, inc_double, n+2, 1);
+}
+
+float pi_approx(int n) {
+    float top;
+    float bottom;
+    if (n % 2 == 0) {
+        top = product_iter(multiply_consec_eo_no, 2, inc_double, (float)n, 1);
+        bottom = 3 * (n+1) * product_iter(multiply_consec_eo_no, 3, inc_double, (float)n, 1);
+    } else {
+        top = product_iter(multiply_consec_eo_no, 2, inc_double, (float)n, 1) * (n+1);
+        bottom = 3 * product_iter(multiply_consec_eo_no, 3, inc_double, (float)n, 1);
+    }
+    return top / bottom * 4;
+}
+
+float accumulate(function<float(float, float)> combiner, float null_value, function<float(float)> term, float a, function<float(float)> next, float b) {
+    if (a > b) {
+        return null_value;
+    }
+    else {
+        return accumulate(combiner, combiner(null_value, term(a)), term, next(a), next, b);
+    }
+}
+
+float accumulate_recursive(function<float(float, float)> combiner, float null_value, function<float(float)> term, float a, function<float(float)> next, float b) {
+    if (a > b) {
+        return null_value;
+    }
+    else {
+        return combiner(term(a), accumulate_recursive(combiner, null_value, term, next(a), next, b));
+    }
+}
+
+float filtered_accumulate(function<bool(float)> filter, function<float(float, float)> combiner, float null_value, function<float(float)> term, float a, function<float(float)> next, float b) {
+    if (a > b) {
+        return null_value;
+    }
+    else {
+        if (filter(a)) {
+            return filtered_accumulate(filter, combiner, combiner(null_value, term(a)), term, next(a), next, b);
+        }
+        else {
+            return filtered_accumulate(filter, combiner, null_value, term, next(a), next, b);
+        }
+    }
+};
+
+float test_combiner(float a, float b) {
+    return a + b;
+}
+
+float filtered_cubes(float x, float y) {
+    return filtered_accumulate(
+        [](float x) {return static_cast<int>(x) % 2 == 0;},
+        [](float x, float y) {return x + y;}, 
+        0,
+        [](float x) {return x * x * x;},
+        x,
+        [](float x) {return x + 1;},
+        y
+    );
+}
+
+float search_for_root(function<float(float)> func, float neg_point, float pos_point) {
+    auto good_enuf = [](float x, float y) {
+        return abs(x - y) < 0.0001;
+    };
+    auto average = [](float x, float y) {return (x + y)/2;};
+    if (good_enuf(neg_point, pos_point)) {
+        return average(neg_point, pos_point);
+    }
+    else {
+        if (func(neg_point) > 0 and func(pos_point) < 0) {
+            return search_for_root(func, pos_point, neg_point);
+        }
+        else if (func(neg_point) < 0 and func(pos_point) > 0) {
+            float avg = average(neg_point,pos_point);
+            if (func(avg) > 0) {
+                return search_for_root(func, neg_point, avg);
+            }
+            else if (func(avg) < 0) {
+                return search_for_root(func, avg, pos_point);
+            }
+            else {
+                return avg;
+            }
+        }
+        else {
+            return 92387091283128903;
+        }
+    }
+}
+
+float fixed_point(function<float(float)> func, float guess) {
+    if (abs(guess - func(guess)) < 0.001) {
+        return func(guess);
+    }
+    else if (abs(guess - func(guess)) > 1000 ) {
+        return func(guess);
+    }
+    else {
+        return fixed_point(func, func(guess));
+    }
 }
 
 int main() {
@@ -347,5 +498,12 @@ int main() {
     cout << is_prime(5) << endl;
     cout << fermat_lil(2, 11) << endl;
     cout << summation(cube, 1, inc, 3) << endl;
-    cout << def_integral(random_math_func, 1, 0.01, 2, change, 0) << endl;
+    cout << def_integral(random_math_func, 1, 0.001, 2, change, 0) << endl;
+    cout << simpsons_est(random_math_func, 1, 2, 0.001, 0) << endl;
+    cout << fact_abstraction(6) << endl;
+    cout << pi_approx(7) << endl;
+    cout << filtered_accumulate(is_prime, test_combiner, 0, sqrt_myfunc, 1, inc, 10) << endl;
+    cout << filtered_cubes(1, 6) << endl;
+    cout << search_for_root([](float x){return x * x * x + 2 * x - 3;}, 0, 100) << endl;
+    cout << fixed_point([](float x){return x * x + 3 * x + 1;}, 0);
 }
