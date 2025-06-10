@@ -143,7 +143,7 @@ int fast_exp_recurse(int b, int n) {
     }
 }
 
-int fast_exp_iter(int b, int count, int product) {
+float fast_exp_iter(float b, int count, float product) {
     if (count == 0) {
         return product;
     }
@@ -155,7 +155,7 @@ int fast_exp_iter(int b, int count, int product) {
     }
 }
 
-int fast_exp(int b, int n) {
+float fast_exp(float b, int n) {
     return fast_exp_iter(b, n, 1);    
 }
 
@@ -264,7 +264,7 @@ bool is_prime(float n) {
 }
 
 bool fermat_lil(int a, int n) {
-    int modpow = fast_exp(a, n) % n;
+    int modpow = static_cast<int>(fast_exp(a, n)) % n;
     int mod = a % n;
     if (modpow == mod) {
         return true;
@@ -470,8 +470,109 @@ float fixed_point(function<float(float)> func, float guess) {
     else if (abs(guess - func(guess)) > 1000 ) {
         return func(guess);
     }
+    else if ( isnan(guess) || guess == INFINITY) {
+        return guess;
+    }
     else {
+        cout << guess << endl;
         return fixed_point(func, func(guess));
+    }
+}
+
+float fixed_damping(function<float(float)> func, float guess) {
+    auto avg = [](float x, float y) -> float {
+        return (x + y) / 2;
+    };
+    if (abs(guess - func(guess)) < 0.001) {
+        return func(guess);
+    }
+    else if (abs(guess - func(guess)) > 1000 ) {
+        return func(guess);
+    }
+    else if ( isnan(guess) || guess == INFINITY) {
+        return guess;
+    }
+    else {
+        cout << guess << endl;
+        return fixed_point(func, func(0.5 * avg(guess, func(guess))));
+    }
+}
+
+float log_approx(float base, float x) {
+    auto log_mac_term = [](float n, float x) -> float {
+        int power = static_cast<int>(n);
+        if (power % 2 == 0) {
+            return -1 * fast_exp(x, power) / power;
+        } else {
+            return fast_exp(x, power) / power;
+        }
+    };
+    auto log_mac_use = [&log_mac_term, x](float n) -> float {
+        if (x > 1) {
+            return log_mac_term(n, (1 / x) - 1) * -1;
+        } else{
+            return log_mac_term(n, x-1);
+        }
+    };
+    auto log_mac_base = [&log_mac_term, base](float n) -> float {
+        return -1 * log_mac_term(n, (1 / base) - 1);
+    };
+    if (base <= 1 || x < -1) {
+        return 21312323423212;
+    }
+    else {
+        return accumulate(
+            [](float a, float b){return a + b;}, 
+            0,
+            log_mac_use, 
+            1, 
+            [](float a){return a + 1;},
+            15
+        ) / accumulate(
+            [](float a, float b){return a + b;}, 
+            0,
+            log_mac_base, 
+            1, 
+            [](float a){return a + 1;},
+            15
+        );
+    }
+}
+
+float xx_solution(float equal) {
+    return fixed_point([equal](float x){return log2(equal)/log2(x);}, 2);
+}
+
+float cont_frac_recursive(float i, function<float(float)> term_n, function<float(float)>term_d, float count) {
+    if (i >= count) {
+        return term_n(i)/term_d(i);
+    }
+    else {
+        return term_n(i) / (term_d(i) + cont_frac_recursive(i+1, term_n, term_d, count));
+    }
+}
+
+float cont_frac(function<float(float)> term_n, function<float(float)> term_d, float count, float result) {
+    if (count <= 0) {
+        return result;
+    }
+    else {
+        return cont_frac(term_n, term_d, count-1, term_n(count)/(term_d(count) + result));
+    }
+}
+
+float tan_cf(float x, float k, float result) {
+    auto square = [](float x){
+        return x * x;
+    };
+    if (k <= 0) {
+        return result;
+    }
+    else if (k == 1) {
+        return tan_cf(x, k-1, x/(k-result));
+    }
+    else {
+        return tan_cf(x, k-1, square(x)/((2 * k - 1)-result));
     }
 }
 
@@ -505,5 +606,37 @@ int main() {
     cout << filtered_accumulate(is_prime, test_combiner, 0, sqrt_myfunc, 1, inc, 10) << endl;
     cout << filtered_cubes(1, 6) << endl;
     cout << search_for_root([](float x){return x * x * x + 2 * x - 3;}, 0, 100) << endl;
-    cout << fixed_point([](float x){return x * x + 3 * x + 1;}, 0);
+    cout << fixed_point([](float x){return x * x + 3 * x + 1;}, 0) << endl;
+    cout << fixed_point([](float x) {return 1 + 1 / x;}, 1) << endl;
+    cout << fixed_damping([](float x) {return 1 + 1 / x;}, 1) << endl;
+    cout << log_approx(2, 4) << endl;
+    cout << xx_solution(100) << endl;
+    cout << cont_frac_recursive(1, 
+        [](float i){
+            return 1;
+        }, 
+        [](float i){
+            if ((static_cast<int>(i) + 1) % 3 == 0) {
+                return (i + 1)/3 * 2;
+            } 
+            else {
+                return 1.0f;
+            }
+        }, 
+        50) << endl;
+    cout << cont_frac( 
+        [](float i){
+            return 1;
+        }, 
+        [](float i){
+            if ((static_cast<int>(i) + 1) % 3 == 0) {
+                return (i + 1)/3 * 2;
+            } 
+            else {
+                return 1.0f;
+            }
+        }, 
+        50, 0
+    ) << endl;
+    cout << tan_cf(1, 50, 1) << endl;
 }
