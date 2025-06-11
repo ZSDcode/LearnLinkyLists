@@ -5,7 +5,7 @@
 using namespace std;
 #include <bits/stdc++.h>
 
-bool is_good_enuf(float guess, float x) {
+bool is_good_enuf(double guess, double x) {
     if (guess * guess - x < 0.001 && guess * guess - x > -0.01) {
         return true;
     }
@@ -14,11 +14,11 @@ bool is_good_enuf(float guess, float x) {
     }
 };
 
-float improve(float guess, float x) {
+double improve(double guess, double x) {
     return (guess + (x / guess))/2;
 };
 
-float sqrt_iter(float guess, float x) {
+double sqrt_iter(double guess, double x) {
     if (is_good_enuf(guess, x)) {
         return guess;
     }
@@ -27,7 +27,7 @@ float sqrt_iter(float guess, float x) {
     }
 };
 
-float sqrt_myfunc(float x) {
+double sqrt_myfunc(double x) {
     return sqrt_iter(1, x);
 };
 
@@ -143,7 +143,7 @@ int fast_exp_recurse(int b, int n) {
     }
 }
 
-float fast_exp_iter(float b, int count, float product) {
+double fast_exp_iter(double b, int count, double product) {
     if (count == 0) {
         return product;
     }
@@ -155,7 +155,7 @@ float fast_exp_iter(float b, int count, float product) {
     }
 }
 
-float fast_exp(float b, int n) {
+double fast_exp(double b, int n) {
     return fast_exp_iter(b, n, 1);    
 }
 
@@ -251,7 +251,7 @@ int check_divisibility(int n, int count, int no_of_divisors) {
     }
 }
 
-bool is_prime(float n) {
+bool is_prime(double n) {
     if (n <= 1) {
         return false;
     }
@@ -310,7 +310,7 @@ int inc(int x) {
     return x + 1;
 }
 
-float def_integral(function<float(float)> func, float x, float dx, float y, function<float(float, float)> change, float tot) {
+double def_integral(function<double(double)> func, double x, double dx, double y, function<double(double, double)> change, double tot) {
     if (x > y) {
         return tot;
     }
@@ -319,26 +319,26 @@ float def_integral(function<float(float)> func, float x, float dx, float y, func
     }
 }
 
-float change(float x, float dx) {
+double change(double x, double dx) {
     return x + dx;
 }
 
-float random_math_func(float x) {
+double random_math_func(double x) {
     return x * x * x + 2 * x;
 }
 
-float simpsons_est(function<float(float)> func, float initial, float final, float dx, float est) {
+double simpsons_est(function<double(double)> func, double initial, double final, double dx, double est) {
     if (initial + 2 * dx - 0.0000001 > final) {
         return est;
     }
     else {
-        float term_sum_main = func(initial) + 4 * func(change(initial, dx)) + func(change(initial, 2 * dx));
-        float term_sum_acc = term_sum_main * dx / 3;
+        double term_sum_main = func(initial) + 4 * func(change(initial, dx)) + func(change(initial, 2 * dx));
+        double term_sum_acc = term_sum_main * dx / 3;
         return simpsons_est(func, change(initial, 2 * dx), final, dx, est + term_sum_acc);
     }
 }
 
-float product_iter(function<float(float)> term, float initial, function<float(float)> next, float final, float result) {
+double product_iter(function<double(double)> term, double initial, function<double(double)> next, double final, double result) {
     if (initial > final) {
         return result;
     }
@@ -347,7 +347,7 @@ float product_iter(function<float(float)> term, float initial, function<float(fl
     }
 }
 
-float product_recurse(function<float(float)> term, float initial, function<float(float)> next, float final) {
+double product_recurse(function<double(double)> term, double initial, function<double(double)> next, double final) {
     if (initial >= final) {
         return term(initial);
     }
@@ -356,11 +356,11 @@ float product_recurse(function<float(float)> term, float initial, function<float
     }
 }
 
-float equiv(int n) {
-    return (float)n;
+double equiv(int n) {
+    return (double)n;
 }
 
-float fact_abstraction(int n) {
+double fact_abstraction(int n) {
     return product_iter(equiv, 1, inc, n, 1);
 }
 
@@ -368,24 +368,24 @@ int inc_double(int x) {
     return x + 2;
 }
 
-float multiply_consec_eo_no(float n) {
+double multiply_consec_eo_no(double n) {
     return product_iter(equiv, n, inc_double, n+2, 1);
 }
 
-float pi_approx(int n) {
-    float top;
-    float bottom;
+double pi_approx(int n) {
+    double top;
+    double bottom;
     if (n % 2 == 0) {
-        top = product_iter(multiply_consec_eo_no, 2, inc_double, (float)n, 1);
-        bottom = 3 * (n+1) * product_iter(multiply_consec_eo_no, 3, inc_double, (float)n, 1);
+        top = product_iter(multiply_consec_eo_no, 2, inc_double, (double)n, 1);
+        bottom = 3 * (n+1) * product_iter(multiply_consec_eo_no, 3, inc_double, (double)n, 1);
     } else {
-        top = product_iter(multiply_consec_eo_no, 2, inc_double, (float)n, 1) * (n+1);
-        bottom = 3 * product_iter(multiply_consec_eo_no, 3, inc_double, (float)n, 1);
+        top = product_iter(multiply_consec_eo_no, 2, inc_double, (double)n, 1) * (n+1);
+        bottom = 3 * product_iter(multiply_consec_eo_no, 3, inc_double, (double)n, 1);
     }
     return top / bottom * 4;
 }
 
-float accumulate(function<float(float, float)> combiner, float null_value, function<float(float)> term, float a, function<float(float)> next, float b) {
+double accumulate(function<double(double, double)> combiner, double null_value, function<double(double)> term, double a, function<double(double)> next, double b) {
     if (a > b) {
         return null_value;
     }
@@ -394,7 +394,7 @@ float accumulate(function<float(float, float)> combiner, float null_value, funct
     }
 }
 
-float accumulate_recursive(function<float(float, float)> combiner, float null_value, function<float(float)> term, float a, function<float(float)> next, float b) {
+double accumulate_recursive(function<double(double, double)> combiner, double null_value, function<double(double)> term, double a, function<double(double)> next, double b) {
     if (a > b) {
         return null_value;
     }
@@ -403,7 +403,7 @@ float accumulate_recursive(function<float(float, float)> combiner, float null_va
     }
 }
 
-float filtered_accumulate(function<bool(float)> filter, function<float(float, float)> combiner, float null_value, function<float(float)> term, float a, function<float(float)> next, float b) {
+double filtered_accumulate(function<bool(double)> filter, function<double(double, double)> combiner, double null_value, function<double(double)> term, double a, function<double(double)> next, double b) {
     if (a > b) {
         return null_value;
     }
@@ -417,27 +417,27 @@ float filtered_accumulate(function<bool(float)> filter, function<float(float, fl
     }
 };
 
-float test_combiner(float a, float b) {
+double test_combiner(double a, double b) {
     return a + b;
 }
 
-float filtered_cubes(float x, float y) {
+double filtered_cubes(double x, double y) {
     return filtered_accumulate(
-        [](float x) {return static_cast<int>(x) % 2 == 0;},
-        [](float x, float y) {return x + y;}, 
+        [](double x) {return static_cast<int>(x) % 2 == 0;},
+        [](double x, double y) {return x + y;}, 
         0,
-        [](float x) {return x * x * x;},
+        [](double x) {return x * x * x;},
         x,
-        [](float x) {return x + 1;},
+        [](double x) {return x + 1;},
         y
     );
 }
 
-float search_for_root(function<float(float)> func, float neg_point, float pos_point) {
-    auto good_enuf = [](float x, float y) {
+double search_for_root(function<double(double)> func, double neg_point, double pos_point) {
+    auto good_enuf = [](double x, double y) {
         return abs(x - y) < 0.0001;
     };
-    auto average = [](float x, float y) {return (x + y)/2;};
+    auto average = [](double x, double y) {return (x + y)/2;};
     if (good_enuf(neg_point, pos_point)) {
         return average(neg_point, pos_point);
     }
@@ -446,7 +446,7 @@ float search_for_root(function<float(float)> func, float neg_point, float pos_po
             return search_for_root(func, pos_point, neg_point);
         }
         else if (func(neg_point) < 0 and func(pos_point) > 0) {
-            float avg = average(neg_point,pos_point);
+            double avg = average(neg_point,pos_point);
             if (func(avg) > 0) {
                 return search_for_root(func, neg_point, avg);
             }
@@ -463,7 +463,7 @@ float search_for_root(function<float(float)> func, float neg_point, float pos_po
     }
 }
 
-float fixed_point(function<float(float)> func, float guess) {
+double fixed_point(function<double(double)> func, double guess) {
     if (abs(guess - func(guess)) < 0.001) {
         return func(guess);
     }
@@ -474,13 +474,12 @@ float fixed_point(function<float(float)> func, float guess) {
         return guess;
     }
     else {
-        cout << guess << endl;
         return fixed_point(func, func(guess));
     }
 }
 
-float fixed_damping(function<float(float)> func, float guess) {
-    auto avg = [](float x, float y) -> float {
+double fixed_damping(function<double(double)> func, double guess) {
+    auto avg = [](double x, double y) -> double {
         return (x + y) / 2;
     };
     if (abs(guess - func(guess)) < 0.001) {
@@ -493,13 +492,12 @@ float fixed_damping(function<float(float)> func, float guess) {
         return guess;
     }
     else {
-        cout << guess << endl;
         return fixed_point(func, func(0.5 * avg(guess, func(guess))));
     }
 }
 
-float log_approx(float base, float x) {
-    auto log_mac_term = [](float n, float x) -> float {
+double log_approx(double base, double x) {
+    auto log_mac_term = [](double n, double x) -> double {
         int power = static_cast<int>(n);
         if (power % 2 == 0) {
             return -1 * fast_exp(x, power) / power;
@@ -507,14 +505,14 @@ float log_approx(float base, float x) {
             return fast_exp(x, power) / power;
         }
     };
-    auto log_mac_use = [&log_mac_term, x](float n) -> float {
+    auto log_mac_use = [&log_mac_term, x](double n) -> double {
         if (x > 1) {
             return log_mac_term(n, (1 / x) - 1) * -1;
         } else{
             return log_mac_term(n, x-1);
         }
     };
-    auto log_mac_base = [&log_mac_term, base](float n) -> float {
+    auto log_mac_base = [&log_mac_term, base](double n) -> double {
         return -1 * log_mac_term(n, (1 / base) - 1);
     };
     if (base <= 1 || x < -1) {
@@ -522,28 +520,28 @@ float log_approx(float base, float x) {
     }
     else {
         return accumulate(
-            [](float a, float b){return a + b;}, 
+            [](double a, double b){return a + b;}, 
             0,
             log_mac_use, 
             1, 
-            [](float a){return a + 1;},
+            [](double a){return a + 1;},
             15
         ) / accumulate(
-            [](float a, float b){return a + b;}, 
+            [](double a, double b){return a + b;}, 
             0,
             log_mac_base, 
             1, 
-            [](float a){return a + 1;},
+            [](double a){return a + 1;},
             15
         );
     }
 }
 
-float xx_solution(float equal) {
-    return fixed_point([equal](float x){return log2(equal)/log2(x);}, 2);
+double xx_solution(double equal) {
+    return fixed_point([equal](double x){return log2(equal)/log2(x);}, 2);
 }
 
-float cont_frac_recursive(float i, function<float(float)> term_n, function<float(float)>term_d, float count) {
+double cont_frac_recursive(double i, function<double(double)> term_n, function<double(double)>term_d, double count) {
     if (i >= count) {
         return term_n(i)/term_d(i);
     }
@@ -552,7 +550,7 @@ float cont_frac_recursive(float i, function<float(float)> term_n, function<float
     }
 }
 
-float cont_frac(function<float(float)> term_n, function<float(float)> term_d, float count, float result) {
+double cont_frac(function<double(double)> term_n, function<double(double)> term_d, double count, double result) {
     if (count <= 0) {
         return result;
     }
@@ -561,8 +559,8 @@ float cont_frac(function<float(float)> term_n, function<float(float)> term_d, fl
     }
 }
 
-float tan_cf(float x, float k, float result) {
-    auto square = [](float x){
+double tan_cf(double x, double k, double result) {
+    auto square = [](double x){
         return x * x;
     };
     if (k <= 0) {
@@ -573,6 +571,36 @@ float tan_cf(float x, float k, float result) {
     }
     else {
         return tan_cf(x, k-1, square(x)/((2 * k - 1)-result));
+    }
+}
+
+double deriv(function<double(double)> func, double x, double dx) {
+    return (func(x + dx) - func(x))/dx;
+}
+
+double newton_method(function<double(double)> func, double guess) {
+    if (abs(func(guess)) < 0.001) {
+        return guess;
+    }
+    else {
+        return newton_method(func, guess - func(guess)/deriv(func, guess, 0.0001));
+    }
+}
+
+double cubic_solve(double a, double b, double c) {
+    return newton_method([a, b, c](double x){return fast_exp(x, 3) + a * fast_exp(x, 2) + b * x + c;}, 1);
+}
+
+double composite2(function<double(double)> f, function<double(double)> g, double x) {
+    return f(g(x));
+}
+
+double repeatedapp(function<double(double)> func, double x, int count) {
+    if (count == 0) {
+        return func(x);
+    }
+    else {
+        return repeatedapp(func, func(x), count-1);
     }
 }
 
@@ -605,38 +633,42 @@ int main() {
     cout << pi_approx(7) << endl;
     cout << filtered_accumulate(is_prime, test_combiner, 0, sqrt_myfunc, 1, inc, 10) << endl;
     cout << filtered_cubes(1, 6) << endl;
-    cout << search_for_root([](float x){return x * x * x + 2 * x - 3;}, 0, 100) << endl;
-    cout << fixed_point([](float x){return x * x + 3 * x + 1;}, 0) << endl;
-    cout << fixed_point([](float x) {return 1 + 1 / x;}, 1) << endl;
-    cout << fixed_damping([](float x) {return 1 + 1 / x;}, 1) << endl;
+    cout << search_for_root([](double x){return x * x * x + 2 * x - 3;}, 0, 100) << endl;
+    cout << fixed_point([](double x){return x * x + 3 * x + 1;}, 0) << endl;
+    cout << fixed_point([](double x) {return 1 + 1 / x;}, 1) << endl;
+    cout << fixed_damping([](double x) {return 1 + 1 / x;}, 1) << endl;
     cout << log_approx(2, 4) << endl;
     cout << xx_solution(100) << endl;
     cout << cont_frac_recursive(1, 
-        [](float i){
+        [](double i){
             return 1;
         }, 
-        [](float i){
+        [](double i){
             if ((static_cast<int>(i) + 1) % 3 == 0) {
                 return (i + 1)/3 * 2;
             } 
             else {
-                return 1.0f;
+                return (double)1;
             }
         }, 
         50) << endl;
     cout << cont_frac( 
-        [](float i){
+        [](double i){
             return 1;
         }, 
-        [](float i){
+        [](double i){
             if ((static_cast<int>(i) + 1) % 3 == 0) {
                 return (i + 1)/3 * 2;
             } 
             else {
-                return 1.0f;
+                return (double)1;
             }
         }, 
         50, 0
     ) << endl;
     cout << tan_cf(1, 50, 1) << endl;
+    cout << deriv([](double x){return x * x * x;}, 5, 0.00001) << endl;
+    cout << newton_method([](double x){return x * x - 10;}, 1) << endl;
+    cout << cubic_solve(0, 0, 1) << endl;
+    cout << repeatedapp([](double x){return x + 1;}, 3, 2) << endl;
 }
