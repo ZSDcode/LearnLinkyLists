@@ -596,12 +596,21 @@ double composite2(function<double(double)> f, function<double(double)> g, double
 }
 
 double repeatedapp(function<double(double)> func, double x, int count) {
-    if (count == 0) {
+    if (count == 1) {
         return func(x);
     }
     else {
         return repeatedapp(func, func(x), count-1);
     }
+}
+
+
+double nfoldsmoothing(function<double(double)> func, double dx, double x, int count) {
+    auto smooth = [func, dx](double x) -> double {
+        double tot = func(x-dx) + func(x) + func(x+dx);
+        return tot / 3;
+    };
+    return repeatedapp(smooth, x, count);
 }
 
 int main() {
@@ -671,4 +680,5 @@ int main() {
     cout << newton_method([](double x){return x * x - 10;}, 1) << endl;
     cout << cubic_solve(0, 0, 1) << endl;
     cout << repeatedapp([](double x){return x + 1;}, 3, 2) << endl;
+    cout << nfoldsmoothing([](double x){return x * x;}, 0.0001, 2, 3);
 }
