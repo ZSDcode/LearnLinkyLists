@@ -613,6 +613,51 @@ double nfoldsmoothing(function<double(double)> func, double dx, double x, int co
     return repeatedapp(smooth, x, count);
 }
 
+double damping_func_gen(double power, double x, double y) {
+    if (power <= 2) {
+        return 0.5 * (x + y);
+    }
+    else {
+
+        return damping_func_gen(power - 1, x, 0.5 * (x + y));
+    }
+}
+
+double solving_xnequals(double power, double equals) {
+    auto damping_func = [power, equals](double x) -> double {
+        return damping_func_gen(power, x, equals/fast_exp(x, power-1));
+    };
+    return fixed_point(damping_func, 1);
+}
+
+function<double(function<double(double)>, double)> iterative_improve(function<bool(function<double(double)>, double, double)> good_enough, function<double(double)> improvement) {
+    function<double(function<double(double)>, double)> returning_func;
+    returning_func = [&, good_enough, improvement](function<double(double)> solving, double x) -> double {
+        if (good_enough(solving, x, 0.0001)) {
+            return x;
+        }
+        else {
+            return returning_func(solving, improvement(x));
+        }
+    };
+    return returning_func;
+}
+
+double generic_equation_solver(function<double(double)> LHS, double RHS) {
+    auto good_enough = [RHS](function<double(double)> solver, double x, double tolerance) -> bool {
+        if (abs(solver(x) - RHS) < tolerance) {
+            return true;
+        }
+        else {return false;}
+    };
+    auto newton_improve_func = [LHS, RHS](double x) -> double {
+        return x - (LHS(x) - RHS)/deriv([LHS, RHS](double x){return LHS(x)-RHS;}, x, 0.0001);
+    };
+    return iterative_improve(good_enough, newton_improve_func)(LHS, 1);
+}
+
+
+
 int main() {
     cout << sqrt_myfunc(1000) << endl;
     cout << A(1, 10) << endl;
@@ -680,5 +725,7 @@ int main() {
     cout << newton_method([](double x){return x * x - 10;}, 1) << endl;
     cout << cubic_solve(0, 0, 1) << endl;
     cout << repeatedapp([](double x){return x + 1;}, 3, 2) << endl;
-    cout << nfoldsmoothing([](double x){return x * x;}, 0.0001, 2, 3);
+    cout << nfoldsmoothing([](double x){return x * x;}, 0.0001, 2, 3) << endl;
+    cout << solving_xnequals(5, 32) << endl;
+    cout << generic_equation_solver([](double x){return sin(x);}, 0.5);
 }
