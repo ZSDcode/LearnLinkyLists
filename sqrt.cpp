@@ -1,3 +1,7 @@
+#include <limits>
+#include <stdexcept>
+#include <format>
+#include <utility>
 #include <functional>
 #include <random>
 #include <iostream>
@@ -656,7 +660,377 @@ double generic_equation_solver(function<double(double)> LHS, double RHS) {
     return iterative_improve(good_enough, newton_improve_func)(LHS, 1);
 }
 
+class Rational {
+private:
+    int numer;
+    int denom;
 
+    void simplify() {
+        if (denom == 0) {
+            cout << "Division by Zero Error";
+            numer = 0;
+            denom = 0;
+        }
+        else {
+            int g = euclid_gcd(numer, denom);
+            numer = numer / g;
+            denom = denom / g;
+        }
+        if (denom < 0) {
+            denom = -1 * denom;
+            numer = -1 * numer;
+        }
+    }
+
+public:
+    Rational(int n, int d) : numer(n), denom(d) {
+        simplify();
+    }
+    int get_numer() const {
+        return numer;
+    }
+    int get_denom() const {
+        return denom;
+    }
+    void print_rational() const {
+        if (denom == 1) {
+            cout << numer << endl;
+        }
+        else {
+            cout << to_string(numer) + " / " + to_string(denom) << endl;
+        }
+    }
+
+    Rational& operator+=(const Rational& other) {
+        numer = numer * other.denom + other.numer * denom;
+        denom = denom * other.denom;
+        simplify();
+        return *this;
+    }
+
+    Rational& operator*=(const Rational& other) {
+        numer = numer * other.numer;
+        denom = denom * other.denom;
+        simplify();
+        return *this;
+    }
+
+    Rational& operator-=(const Rational& other) {
+        Rational neg(-1 * other.numer, other.denom);
+        return *this += neg;
+    }
+
+    Rational& operator/=(const Rational& other) {
+        Rational flip(other.denom, other.numer);
+        return *this*=flip;
+    }
+};
+
+Rational operator+(Rational r1, const Rational& r2) {
+    r1 += r2;
+    return r1;
+}
+
+Rational operator-(Rational r1, const Rational& r2) {
+    r1 -= r2;
+    return r1;
+}
+
+Rational operator*(Rational r1, const Rational& r2) {
+    r1 *= r2;
+    return r1;
+}
+
+Rational operator/(Rational r1, const Rational& r2) {
+    r1 /= r2;
+    return r1;
+}
+
+bool operator==(const Rational& r1, const Rational& r2) {
+    return (r1.get_numer() == r2.get_numer() && r1.get_denom() == r2.get_denom());
+}
+
+bool operator!=(const Rational& r1, const Rational& r2) {
+    return !(r1 == r2);
+}
+
+template<typename T>
+Rational to_rationalise(T n) {
+    function<Rational(T, int)> process;
+    process = [&](T n, int denom) {
+        if (abs(static_cast<int>(n * denom) - n * denom) < 0.000001) {
+            return Rational(static_cast<int>(n*denom), denom);
+        }
+        else {
+            return process(n, denom * 10);
+        }
+    };
+    if constexpr (is_integral_v<T>) { 
+        return Rational(n, 1);
+    }
+    else {
+        return process(n, 1);
+    }
+}
+
+class Point {
+private:
+    double x_coord;
+    double y_coord;
+public:
+    Point(double x, double y) : x_coord(x), y_coord(y) {}
+    string print_point() const {
+        return ("(" + to_string(x_coord) + ", " + to_string(y_coord) + ")");
+    }
+    double get_x() const {
+        return x_coord;
+    }
+    double get_y() const {
+        return y_coord;
+    }
+};
+
+class LineSegment {
+private:
+    Point start_pt;
+    Point end_pt;
+public:
+    LineSegment (Point p1, Point p2) : start_pt(p1), end_pt(p2) {}
+    string print_seg() const {
+        return "Start pt: " + start_pt.print_point() + ", End pt: " + end_pt.print_point();
+    }
+    Point midpoint() const {
+        return Point((start_pt.get_x() + end_pt.get_x())/2, (start_pt.get_y() + end_pt.get_y())/2);
+    }
+    double length() const {
+        auto square = [](double x) -> double {
+            return x * x;
+        };
+        double length = sqrt_myfunc(square(start_pt.get_x() - end_pt.get_x()) + square(start_pt.get_y() - end_pt.get_y()));
+        return length;
+    }
+};
+
+class Rectangle1 {
+private:
+    Point bLeft_corner;
+    double length;
+    double width;
+    double rotation_angle;
+    Point tLeft_corner;
+    Point tRight_corner;
+    Point bRight_corner;
+    Rectangle1& normalize_angle() {
+        if (rotation_angle > M_PI) {
+            int k = ceil((rotation_angle - M_PI)/(2 * M_PI));
+            rotation_angle -= 2 * k * M_PI;
+            return *this;
+        }
+        else if (rotation_angle <= -1 * M_PI) {
+            int k = floor((rotation_angle + M_PI)/(2 * M_PI));
+            rotation_angle -= 2 * k * M_PI;
+            return *this;
+        }
+        else {
+            return *this;
+        }
+    }
+    Rectangle1& calc_update_vertices() {
+        auto pivot = [](Point pivot_pt, double l, double angle) -> Point {
+            return Point(pivot_pt.get_x() + (l * cos(angle)), pivot_pt.get_y() + (l * sin(angle)));
+        };
+        tLeft_corner = pivot(bLeft_corner, width, rotation_angle + M_PI/2);
+        bRight_corner = pivot(bLeft_corner, length, rotation_angle);
+        tRight_corner = pivot(tLeft_corner, length, rotation_angle);
+        return *this;
+    }
+public:
+    Rectangle1(const Point& BL, double l, double w, double rot_angle, Point p_dummy) : bLeft_corner(BL), length(l), width(w), rotation_angle(rot_angle), tLeft_corner(p_dummy), tRight_corner(p_dummy), bRight_corner(p_dummy) {
+        normalize_angle();
+        calc_update_vertices();
+    }
+    string print_vertices() const {
+        return ("P1: " + bLeft_corner.print_point() + ", P2: " + tLeft_corner.print_point()  + ", P3: " + bRight_corner.print_point() + ", P4: " + tRight_corner.print_point());
+    }
+    double area() const {
+        return length * width;
+    }
+    double perimeter() const {
+        return 2 * (length + width);
+    }
+};
+
+function<double(function<double(double, double)>)> my_pair(double a, double b) {
+    return [a, b](function<double(double, double)> m) -> double {
+        return m(a, b);
+    };
+}
+
+double head(function<double(function<double(double, double)>)> a) {
+    auto z = [](double a, double b) -> double {
+        return a;
+    };
+    return a(z);
+}
+
+double tail(function<double(function<double(double, double)>)> a) {
+    auto z = [](double a, double b) -> double {
+        return b;
+    };
+    return a(z);
+}
+
+double my_pair2(int a, int b) {
+    return fast_exp(2, a) * fast_exp(3, b);
+}
+
+double head2(double x) {
+    function<int(double, double)> counting2s;
+    counting2s = [&](double a, double b) -> int {
+        if (static_cast<int>(a) % 2 != 0) {
+            return static_cast<int>(b);
+        }
+        else {
+            return counting2s(a/2, b+1);
+        }
+    };
+    return counting2s(x, 0);
+}
+
+function<function<int(int)>(function<int(int)>)> zero() {
+    return [](function<int(int)> f) -> function<int(int)> {
+        return [](int x) -> int {
+            return x;
+        };
+    };
+}
+
+function<function<int(int)>(function<int(int)>)> one() {
+    return [](function<int(int)> f) -> function<int(int)> {
+        return [f](int x) -> int {
+            return f(x);
+        };
+    };
+}
+
+function<function<int(int)>(function<int(int)>)> succ(function<function<int(int)>(function<int(int)>)> n) {
+    return [n](function<int(int)> f) -> function<int(int)> {
+        return [f, n](int x) -> int {
+            return f((n(f))(x));
+        };
+    };
+}
+
+function<function<int(int)>(function<int(int)>)> two() {
+    return [](function<int(int)> f) -> function<int(int)> {
+        return [f](int x) -> int {
+            return f(f(x));
+        };
+    };
+}
+
+class Interval {
+    private:
+        double upper;
+        double lower;
+    public:
+        Interval(string method, double a, double b) {
+            if (method == "low_high") {
+                if (a > b) {
+                    upper = a;
+                    lower = b;
+                } else {
+                    upper = b;
+                    lower = a;
+                }
+            } else if (method == "center_percent") {
+                lower = a - (b / 100 * a);
+                upper = a + (b / 100 * a);
+            } else {
+                throw invalid_argument("Error: String unrecognised by class Interval");
+            }
+        }
+
+        double get_upper() const {
+            return upper;
+        }
+
+        double get_lower() const {
+            return lower;
+        }
+
+        Interval& operator += (const Interval& inter2) {
+            upper += inter2.upper;
+            lower += inter2.lower;
+            return *this;
+        }
+
+        Interval& operator *= (const Interval& inter2) {
+            if (upper > 0 and lower > 0 and inter2.upper > 0 and inter2.lower > 0) {
+                upper *= inter2.upper;
+                lower *= inter2.lower;
+            } else if (upper > 0 and lower < 0 and inter2.upper > 0 and inter2.lower > 0) {
+                upper *= inter2.upper;
+                lower *= inter2.upper;
+            } else if (upper < 0 and lower < 0 and inter2.upper > 0 and inter2.lower > 0) {
+                lower *= inter2.upper;
+                upper *= inter2.lower;
+            } else if (upper < 0 and lower < 0 and inter2.upper > 0 and inter2.lower < 0) {
+                upper = lower * inter2.lower;
+                lower *= inter2.upper;
+            } else if (upper < 0 and lower < 0 and inter2.upper < 0 and inter2.lower < 0) {
+                double stored_low = upper * inter2.upper;
+                upper = lower * inter2.lower;
+                lower = stored_low;
+            } else if (upper > 0 and lower < 0 and inter2.upper > 0 and inter2.lower < 0) {
+                double stored_low = lower;
+                if (upper * inter2.lower > lower * inter2.upper) {
+                    stored_low = lower * inter2.upper;
+                } else {
+                    stored_low = upper * inter2.lower;
+                }
+                if (upper * inter2.upper > lower * inter2.lower) {
+                    upper *= inter2.upper;
+                } else {
+                    upper = lower * inter2.lower;
+                }
+                lower = stored_low;
+            } else if (upper > 0 and lower > 0 and inter2.upper > 0 and inter2.lower < 0) {
+                lower = inter2.lower * upper;
+                upper *= inter2.upper;
+            } else if (upper > 0 and lower > 0 and inter2.upper < 0 and inter2.lower < 0) {
+                double stored_low = upper * inter2.lower;
+                upper = lower * inter2.lower;
+                lower = stored_low;
+            } else if (upper > 0 and lower < 0 and inter2.upper < 0 and inter2.lower < 0) {
+                double stored_low = upper * inter2.lower;
+                upper = lower * inter2.lower;
+                lower = stored_low;
+            }
+            return *this;
+        }
+};
+
+Interval operator + (Interval inter1, const Interval& inter2) {
+    return inter1 += inter2;
+}
+
+Interval operator - (Interval inter1, const Interval& inter2) {
+    Interval inter3("low_high", -1 * inter2.get_lower(), -1 * inter2.get_upper());
+    return inter1 += inter3;
+}
+
+Interval operator / (Interval inter1, const Interval& inter2) {
+    if (inter2.get_upper() == 0 or inter2.get_lower() == 0 or (inter2.get_upper() > 0 and inter2.get_lower() < 0)) {
+        throw runtime_error("Error: Invalid 2nd interval, no 0 value");
+    }
+    Interval inter3("low_high", 1/inter2.get_upper(), 1/inter2.get_lower());
+    return inter1 *= inter3;
+}
+
+Interval operator * (Interval inter1, const Interval& inter2) {
+    return inter1 *= inter2;
+}
 
 int main() {
     cout << sqrt_myfunc(1000) << endl;
@@ -727,5 +1101,27 @@ int main() {
     cout << repeatedapp([](double x){return x + 1;}, 3, 2) << endl;
     cout << nfoldsmoothing([](double x){return x * x;}, 0.0001, 2, 3) << endl;
     cout << solving_xnequals(5, 32) << endl;
-    cout << generic_equation_solver([](double x){return sin(x);}, 0.5);
+    cout << generic_equation_solver([](double x){return sin(x);}, 0.5) << endl;
+    Rational r1(-3, 4);
+    r1.print_rational();
+    Rational r2(1, 4);
+    Rational r3(2, 3);
+    r1 += r2;
+    r1 *= r3;
+    r2 -= r3;
+    Rational sum = r2 + r3;
+    r1.print_rational();
+    r2.print_rational();
+    sum.print_rational();
+    to_rationalise(10).print_rational();
+    to_rationalise(0.5).print_rational();
+    Point p1(1, 2);
+    cout << p1.print_point() << endl;
+    Point p2(4, 6);
+    LineSegment L1(p1, p2);
+    cout << L1.print_seg() << endl;
+    cout << L1.midpoint().print_point() << endl;
+    cout << L1.length() << endl;
+    cout << head(my_pair(1,2)) << endl;
+    cout << head2(my_pair2(1, 2)) << endl;
 }
