@@ -1096,6 +1096,34 @@ int no_of_ways(int amount, shared_ptr<Node> head_ptr) {
     }
 }
 
+shared_ptr<Node> reverse_iter(shared_ptr<Node>prev_ptr, shared_ptr<Node>curr_ptr) {
+    if (curr_ptr == nullptr) {
+        return prev_ptr;
+    }
+    shared_ptr<Node> temp_ptr = curr_ptr->y;
+    if (temp_ptr == nullptr) {
+        curr_ptr->y = prev_ptr;
+        return curr_ptr;
+    } else {
+        curr_ptr->y = prev_ptr;
+        return reverse_iter(curr_ptr, temp_ptr);
+    }
+}
+
+function<int(int)> curried_sum(int x) {
+    return [x](int y) -> int {
+        return x + y;
+    };
+}
+
+int brooks(function<function<int(int)>(int)> curried_f, shared_ptr<Node> head_ptr) {
+    if (head_ptr->y == nullptr) {
+        return head_ptr->x;
+    } else {
+        return curried_f(brooks(curried_f, head_ptr->y))(head_ptr->x);
+    }
+}
+
 int main() {
     cout << sqrt_myfunc(1000) << endl;
     cout << A(1, 10) << endl;
@@ -1200,8 +1228,10 @@ int main() {
     link_existing(second, fourth);
     link_existing(third, fifth);
     print_links(*head);
+    print_links(*reverse_iter(nullptr, head));
     cout << length_of_links(*head) << endl;
     cout << get_after(*second, 1) << endl;
-    print_links(*reverse_list(head));
-    cout << no_of_ways(100, fourth);
+    print_links(*reverse_list(fourth));
+    cout << no_of_ways(100, fourth) << endl;
+    cout << brooks(curried_sum, head);
 }
