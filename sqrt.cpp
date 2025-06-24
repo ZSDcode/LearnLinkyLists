@@ -951,6 +951,8 @@ class Interval {
             }
         }
 
+        Interval(double a, double b) : Interval("low_high", a, b) {}
+
         double get_upper() const {
             return upper;
         }
@@ -959,54 +961,41 @@ class Interval {
             return lower;
         }
 
+        string print_interval() const {
+            return "(" + to_string(lower) + ", " + to_string(upper) + ")";
+        }
+
         Interval& operator += (const Interval& inter2) {
             upper += inter2.upper;
             lower += inter2.lower;
             return *this;
         }
-
+        
         Interval& operator *= (const Interval& inter2) {
-            if (upper > 0 and lower > 0 and inter2.upper > 0 and inter2.lower > 0) {
-                upper *= inter2.upper;
-                lower *= inter2.lower;
-            } else if (upper > 0 and lower < 0 and inter2.upper > 0 and inter2.lower > 0) {
-                upper *= inter2.upper;
-                lower *= inter2.upper;
-            } else if (upper < 0 and lower < 0 and inter2.upper > 0 and inter2.lower > 0) {
-                lower *= inter2.upper;
-                upper *= inter2.lower;
-            } else if (upper < 0 and lower < 0 and inter2.upper > 0 and inter2.lower < 0) {
-                upper = lower * inter2.lower;
-                lower *= inter2.upper;
-            } else if (upper < 0 and lower < 0 and inter2.upper < 0 and inter2.lower < 0) {
-                double stored_low = upper * inter2.upper;
-                upper = lower * inter2.lower;
-                lower = stored_low;
-            } else if (upper > 0 and lower < 0 and inter2.upper > 0 and inter2.lower < 0) {
-                double stored_low = lower;
-                if (upper * inter2.lower > lower * inter2.upper) {
-                    stored_low = lower * inter2.upper;
+            double UU = upper * inter2.upper;
+            double UL = upper * inter2.lower;
+            double LU = lower * inter2.upper;
+            double LL = lower * inter2.lower;
+            vector<double> options = {UU, UL, LU, LL};
+            double lowest = numeric_limits<double>::max();
+            double highest = numeric_limits<double>::lowest();
+            function<void(int)> z;
+            z = [&](int n) -> void {
+                if (n >= options.size()) {
+                    return;
                 } else {
-                    stored_low = upper * inter2.lower;
+                    if (options[n] > highest) {
+                        highest = options[n];
+                    } 
+                    if (options[n] < lowest) {
+                        lowest = options[n];
+                    }
                 }
-                if (upper * inter2.upper > lower * inter2.lower) {
-                    upper *= inter2.upper;
-                } else {
-                    upper = lower * inter2.lower;
-                }
-                lower = stored_low;
-            } else if (upper > 0 and lower > 0 and inter2.upper > 0 and inter2.lower < 0) {
-                lower = inter2.lower * upper;
-                upper *= inter2.upper;
-            } else if (upper > 0 and lower > 0 and inter2.upper < 0 and inter2.lower < 0) {
-                double stored_low = upper * inter2.lower;
-                upper = lower * inter2.lower;
-                lower = stored_low;
-            } else if (upper > 0 and lower < 0 and inter2.upper < 0 and inter2.lower < 0) {
-                double stored_low = upper * inter2.lower;
-                upper = lower * inter2.lower;
-                lower = stored_low;
-            }
+                z(n+1);
+            };
+            z(0);
+            upper = highest;
+            lower = lowest;
             return *this;
         }
 };
@@ -1020,16 +1009,91 @@ Interval operator - (Interval inter1, const Interval& inter2) {
     return inter1 += inter3;
 }
 
-Interval operator / (Interval inter1, const Interval& inter2) {
+Interval operator / (const Interval& inter1, const Interval& inter2) {
     if (inter2.get_upper() == 0 or inter2.get_lower() == 0 or (inter2.get_upper() > 0 and inter2.get_lower() < 0)) {
         throw runtime_error("Error: Invalid 2nd interval, no 0 value");
     }
     Interval inter3("low_high", 1/inter2.get_upper(), 1/inter2.get_lower());
-    return inter1 *= inter3;
+    Interval inter4(inter1.get_lower() * inter3.get_upper(), inter1.get_upper() * inter3.get_lower());
+    return inter4;
 }
 
 Interval operator * (Interval inter1, const Interval& inter2) {
     return inter1 *= inter2;
+}
+
+Interval parallel_resist(const Interval& inter1, const Interval& inter2) {
+    Interval numer = inter1 * inter2;
+    Interval denom = inter1 + inter2;
+    return numer / denom;
+}
+
+Interval parallel_resist2(const Interval& inter1, const Interval& inter2) {
+    Interval base("low_high", 1, 1);
+    Interval denom = (base / inter1) + (base / inter2);
+    return base / denom;
+}
+
+struct Node {
+    int x;
+    shared_ptr<Node> y;
+    Node(int data, shared_ptr<Node> next_node) : x(data), y(next_node) {}
+};
+
+void link_existing(shared_ptr<Node>& n1_ptr, shared_ptr<Node>& n2_ptr) {
+    n2_ptr->y = n1_ptr->y;
+    n1_ptr->y = n2_ptr;
+}
+
+void print_links(const Node& head) {
+    if (head.y == nullptr) {
+        cout << head.x << endl;
+    } else {
+        cout << head.x << " -> ";
+        print_links(*head.y);
+    }
+}
+
+int length_of_links(const Node& head) {
+    if (head.y == nullptr) {
+        return 1;
+    } else {
+        return 1 + length_of_links(*head.y);
+    }
+}
+
+int get_after(const Node& head, int index) {
+    if (index >= length_of_links(head)) {
+        throw("Error: Index out of Range!");
+    }
+    if (index == 0) {
+        return head.x;
+    } else {
+        return get_after(*head.y, index-1);
+    }
+}
+
+shared_ptr<Node> reverse_list(shared_ptr<Node> curr_node) {
+    if (curr_node == nullptr) {
+        return nullptr;
+    }
+    if (curr_node->y == nullptr) {
+        return curr_node;
+    }
+    shared_ptr<Node> new_head = reverse_list(curr_node -> y);
+    curr_node->y->y = curr_node;
+    curr_node->y = nullptr;
+    return new_head;
+}
+
+int no_of_ways(int amount, shared_ptr<Node> head_ptr) {
+    if (amount == 0) {
+        return 1;
+    } else if (amount < 0 or head_ptr == nullptr) {
+        return 0;
+    } else {
+        return no_of_ways(amount - head_ptr->x, head_ptr) + no_of_ways(amount, head_ptr->y);
+    }
 }
 
 int main() {
@@ -1124,4 +1188,20 @@ int main() {
     cout << L1.length() << endl;
     cout << head(my_pair(1,2)) << endl;
     cout << head2(my_pair2(1, 2)) << endl;
+    cout << parallel_resist(Interval(1, 2), Interval(1, 3)).print_interval() << endl;
+    cout << parallel_resist2(Interval(1, 2), Interval(1, 3)).print_interval() << endl;
+    shared_ptr<Node> head = make_shared<Node>(1, nullptr);
+    shared_ptr<Node> second = make_shared<Node>(2, nullptr);
+    shared_ptr<Node> third = make_shared<Node>(3, nullptr);
+    shared_ptr<Node> fourth = make_shared<Node>(4, nullptr);
+    shared_ptr<Node> fifth = make_shared<Node>(5, nullptr);
+    link_existing(head, second);
+    link_existing(head, third);
+    link_existing(second, fourth);
+    link_existing(third, fifth);
+    print_links(*head);
+    cout << length_of_links(*head) << endl;
+    cout << get_after(*second, 1) << endl;
+    print_links(*reverse_list(head));
+    cout << no_of_ways(100, fourth);
 }
