@@ -1124,6 +1124,23 @@ int brooks(function<function<int(int)>(int)> curried_f, shared_ptr<Node> head_pt
     }
 }
 
+shared_ptr<Node> function_map(function<double(double)> f, shared_ptr<Node> head_ptr) {
+    if (head_ptr == nullptr) {
+        return nullptr;
+    }
+    function<shared_ptr<Node>(shared_ptr<Node>, shared_ptr<Node>)> z;
+    z = [f, &z](shared_ptr<Node> start_ptr, shared_ptr<Node> curr_ptr) -> shared_ptr<Node> {
+        if (curr_ptr->y == nullptr) {
+            curr_ptr->x = f(curr_ptr->x);
+            return start_ptr;
+        } else {
+            curr_ptr->x = f(curr_ptr->x);
+            return z(start_ptr, curr_ptr->y);
+        }
+    };
+    return z(head_ptr, head_ptr);
+}
+
 int main() {
     cout << sqrt_myfunc(1000) << endl;
     cout << A(1, 10) << endl;
@@ -1233,5 +1250,7 @@ int main() {
     cout << get_after(*second, 1) << endl;
     print_links(*reverse_list(fourth));
     cout << no_of_ways(100, fourth) << endl;
-    cout << brooks(curried_sum, head);
+    cout << brooks(curried_sum, head) << endl;
+    print_links(*function_map([](double x){return x * 10;}, head));
+    print_links(*function_map([](double x){ return x * x;}, head));
 }
